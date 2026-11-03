@@ -1,3 +1,224 @@
+-- =====================================================
+-- Banco de dados: Loja de Biscuit
+-- SGBD: MariaDB (executar pelo DBeaver)
+-- =====================================================
+
+CREATE DATABASE IF NOT EXISTS loja_biscuit
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE loja_biscuit;
+
+-- Remove na ordem inversa das dependências (permite rodar o script de novo)
+DROP VIEW IF EXISTS vw_vendas_por_categoria;
+DROP VIEW IF EXISTS vw_vendas_por_mes;
+DROP TABLE IF EXISTS itens_pedido;
+DROP TABLE IF EXISTS pedidos;
+DROP TABLE IF EXISTS produtos;
+DROP TABLE IF EXISTS categorias;
+DROP TABLE IF EXISTS usuarios;
+
+-- =====================================================
+-- TABELAS
+-- =====================================================
+
+-- Usuários (tela de cadastro). CPF guardado só com os 11 dígitos.
+CREATE TABLE usuarios (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nome        VARCHAR(100) NOT NULL,
+  email       VARCHAR(150) NOT NULL,
+  cpf         CHAR(11)     NOT NULL,
+  senha_hash  VARCHAR(255) NOT NULL,
+  criado_em   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_usuarios_email UNIQUE (email),
+  CONSTRAINT uq_usuarios_cpf   UNIQUE (cpf)
+) ENGINE=InnoDB;
+
+CREATE TABLE categorias (
+  id    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nome  VARCHAR(50) NOT NULL,
+  CONSTRAINT uq_categorias_nome UNIQUE (nome)
+) ENGINE=InnoDB;
+
+CREATE TABLE produtos (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  categoria_id  INT UNSIGNED  NOT NULL,
+  nome          VARCHAR(100)  NOT NULL,
+  descricao     VARCHAR(255),
+  preco         DECIMAL(10,2) NOT NULL CHECK (preco > 0),
+  estoque       INT UNSIGNED  NOT NULL DEFAULT 0,
+  ativo         BOOLEAN       NOT NULL DEFAULT TRUE,
+  criado_em     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_produtos_categoria
+    FOREIGN KEY (categoria_id) REFERENCES categorias (id),
+  INDEX idx_produtos_categoria (categoria_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE pedidos (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  usuario_id  INT UNSIGNED NOT NULL,
+  status      ENUM('pendente','pago','enviado','entregue','cancelado')
+              NOT NULL DEFAULT 'pendente',
+  total       DECIMAL(10,2) NOT NULL DEFAULT 0,
+  criado_em   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_pedidos_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
+  INDEX idx_pedidos_usuario (usuario_id),
+  INDEX idx_pedidos_criado_em (criado_em)
+) ENGINE=InnoDB;
+
+CREATE TABLE itens_pedido (
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  pedido_id       INT UNSIGNED  NOT NULL,
+  produto_id      INT UNSIGNED  NOT NULL,
+  quantidade      INT UNSIGNED  NOT NULL CHECK (quantidade > 0),
+  preco_unitario  DECIMAL(10,2) NOT NULL,
+  CONSTRAINT fk_itens_pedido
+    FOREIGN KEY (pedido_id)  REFERENCES pedidos (id) ON DELETE CASCADE,
+  CONSTRAINT fk_itens_produto
+    FOREIGN KEY (produto_id) REFERENCES produtos (id),
+  INDEX idx_itens_pedido (pedido_id),
+  INDEX idx_itens_produto (produto_id)
+) ENGINE=InnoDB;
+
+-- =====================================================
+-- DADOS INICIAIS (SEEDS)
+-- =====================================================
+
+INSERT INTO categorias (nome) VALUES
+  ('Bonequinhos'),   -- id 1
+  ('Brincos'),       -- id 2
+  ('Chaveiros'),     -- id 3
+  ('Espelhos');      -- id 4
+
+INSERT INTO produtos (categoria_id, nome, descricao, preco, estoque) VALUES
+  -- Bonequinhos
+  (1, 'Ursinho de Biscuit',        'Ursinho fofo modelado à mão',            45.00, 12),
+  (1, 'Gatinho Sentado',           'Gatinho com lacinho, vários tons',       38.00, 15),
+  (1, 'Unicórnio Mágico',          'Unicórnio com crina colorida',           52.00,  8),
+  (1, 'Casal de Noivinhos',        'Topo de bolo ou lembrança de casamento', 89.90,  5),
+  (1, 'Boneca Personalizada',      'Feita sob encomenda',                   120.00,  3),
+  -- Brincos
+  (2, 'Brinco Morango',            'Par de brincos de morango',              25.00, 30),
+  (2, 'Brinco Margarida',          'Par de brincos de flor margarida',       22.00, 28),
+  (2, 'Brinco Gotinha de Chuva',   'Par de brincos azul translúcido',        20.00, 25),
+  (2, 'Brinco Coração',            'Par de brincos de coração',              24.00, 22),
+  (2, 'Brinco Cerejinha',          'Par de brincos de cereja',               26.00, 20),
+  -- Chaveiros
+  (3, 'Chaveiro Gatinho',          'Chaveiro de gatinho com argola',         18.00, 40),
+  (3, 'Chaveiro Cupcake',          'Chaveiro de cupcake colorido',           20.00, 35),
+  (3, 'Chaveiro Letra Personalizada','Inicial do nome em biscuit',           15.00, 50),
+  (3, 'Chaveiro Ursinho',          'Mini ursinho com argola',                19.00, 32),
+  -- Espelhos
+  (4, 'Espelho de Bolsa Flores',   'Espelho de bolsa decorado com flores',   28.00, 18),
+  (4, 'Espelho Gatinho',           'Espelho de bolsa em formato de gato',    32.00, 14),
+  (4, 'Espelho Coração Rosa',      'Espelho de bolsa em formato de coração', 30.00, 16),
+  (4, 'Espelho Unicórnio',         'Espelho de bolsa com unicórnio',         35.00, 10);
+
+-- Usuários de teste (senha_hash fictício: esses usuários NÃO fazem login).
+-- Os CPFs abaixo são válidos matematicamente, mas de teste.
+INSERT INTO usuarios (nome, email, cpf, senha_hash, criado_em) VALUES
+  ('Ana Souza',      'ana@exemplo.com',    '52998224725', 'hash_ficticio', '2026-05-20 10:00:00'),
+  ('Bruno Lima',     'bruno@exemplo.com',  '11144477735', 'hash_ficticio', '2026-06-01 09:30:00'),
+  ('Carla Mendes',   'carla@exemplo.com',  '12345678909', 'hash_ficticio', '2026-06-25 14:15:00'),
+  ('Diego Rocha',    'diego@exemplo.com',  '39053344705', 'hash_ficticio', '2026-07-10 16:45:00'),
+  ('Elisa Martins',  'elisa@exemplo.com',  '16899535009', 'hash_ficticio', '2026-08-02 11:20:00');
+
+INSERT INTO pedidos (usuario_id, status, criado_em) VALUES
+  (1, 'entregue',  '2026-06-05 14:20:00'),  -- 1
+  (2, 'entregue',  '2026-06-18 10:05:00'),  -- 2
+  (3, 'entregue',  '2026-07-02 16:40:00'),  -- 3
+  (1, 'entregue',  '2026-07-15 09:30:00'),  -- 4
+  (4, 'entregue',  '2026-07-28 19:10:00'),  -- 5
+  (5, 'entregue',  '2026-08-09 11:00:00'),  -- 6
+  (2, 'entregue',  '2026-08-21 15:45:00'),  -- 7
+  (3, 'entregue',  '2026-09-03 13:25:00'),  -- 8
+  (4, 'entregue',  '2026-09-14 20:00:00'),  -- 9
+  (1, 'enviado',   '2026-09-27 10:15:00'),  -- 10
+  (5, 'enviado',   '2026-10-08 17:30:00'),  -- 11
+  (2, 'pago',      '2026-10-19 12:50:00'),  -- 12
+  (3, 'pendente',  '2026-10-25 18:20:00'),  -- 13
+  (4, 'cancelado', '2026-10-27 09:40:00');  -- 14
+
+-- O preço unitário é copiado do produto no momento da venda
+INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario)
+SELECT v.pedido_id, v.produto_id, v.quantidade, p.preco
+FROM (
+  SELECT 1 AS pedido_id,  1 AS produto_id, 1 AS quantidade UNION ALL
+  SELECT 1,   6, 2 UNION ALL
+  SELECT 2,  11, 3 UNION ALL
+  SELECT 2,  15, 1 UNION ALL
+  SELECT 3,   5, 1 UNION ALL
+  SELECT 4,   7, 2 UNION ALL
+  SELECT 4,  12, 1 UNION ALL
+  SELECT 5,   3, 1 UNION ALL
+  SELECT 5,  16, 1 UNION ALL
+  SELECT 6,   9, 1 UNION ALL
+  SELECT 6,  13, 2 UNION ALL
+  SELECT 6,  17, 1 UNION ALL
+  SELECT 7,   2, 2 UNION ALL
+  SELECT 8,   4, 1 UNION ALL
+  SELECT 8,  14, 2 UNION ALL
+  SELECT 9,  10, 2 UNION ALL
+  SELECT 9,  18, 1 UNION ALL
+  SELECT 10,  1, 1 UNION ALL
+  SELECT 10,  8, 1 UNION ALL
+  SELECT 10, 11, 2 UNION ALL
+  SELECT 11,  5, 1 UNION ALL
+  SELECT 11,  6, 1 UNION ALL
+  SELECT 12, 15, 2 UNION ALL
+  SELECT 12, 12, 1 UNION ALL
+  SELECT 13,  3, 1 UNION ALL
+  SELECT 14, 13, 4
+) AS v
+JOIN produtos p ON p.id = v.produto_id;
+
+-- Calcula o total de cada pedido a partir dos itens
+UPDATE pedidos p
+SET p.total = (
+  SELECT COALESCE(SUM(i.quantidade * i.preco_unitario), 0)
+  FROM itens_pedido i
+  WHERE i.pedido_id = p.id
+);
+
+-- =====================================================
+-- VIEWS ANALÍTICAS (base para os gráficos)
+-- =====================================================
+
+-- Série temporal: pedidos e faturamento por mês
+CREATE VIEW vw_vendas_por_mes AS
+SELECT
+  DATE_FORMAT(criado_em, '%Y-%m') AS mes,
+  COUNT(*)                        AS qtd_pedidos,
+  SUM(total)                      AS faturamento
+FROM pedidos
+WHERE status <> 'cancelado'
+GROUP BY DATE_FORMAT(criado_em, '%Y-%m');
+
+-- Gráfico de barras: unidades e faturamento por categoria
+CREATE VIEW vw_vendas_por_categoria AS
+SELECT
+  c.nome                                AS categoria,
+  SUM(i.quantidade)                     AS unidades_vendidas,
+  SUM(i.quantidade * i.preco_unitario)  AS faturamento
+FROM itens_pedido i
+JOIN pedidos    p  ON p.id  = i.pedido_id
+JOIN produtos   pr ON pr.id = i.produto_id
+JOIN categorias c  ON c.id  = pr.categoria_id
+WHERE p.status <> 'cancelado'
+GROUP BY c.id, c.nome;
+
+-- Conferência rápida
+SELECT * FROM vw_vendas_por_mes;
+SELECT * FROM vw_vendas_por_categoria;
+
+-- =====================================================
+-- Dados adicionais para a Análise Descritiva (gráficos)
+-- Rodar DEPOIS do schema.sql, no DBeaver, com Alt + X (executar script).
+-- Gera pedidos fictícios de janeiro a outubro de 2026.
+-- Pode ser executado de novo: ele apaga os pedidos 101 em diante antes de inserir.
+-- =====================================================
+
 USE loja_biscuit;
 
 DELETE FROM itens_pedido WHERE pedido_id >= 101;
@@ -454,3 +675,7 @@ INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario) VAL
 -- Conferência rápida
 SELECT COUNT(*) AS pedidos_novos FROM pedidos WHERE id >= 101;
 SELECT COUNT(*) AS itens_novos FROM itens_pedido WHERE pedido_id >= 101;
+
+USE loja_biscuit;
+DELETE FROM itens_pedido WHERE pedido_id >= 101;
+DELETE FROM pedidos WHERE id >= 101;

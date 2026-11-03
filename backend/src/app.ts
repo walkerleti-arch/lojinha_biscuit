@@ -1,7 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import userRoutes from './routes/userRoutes';
-import analiseRoutes from './routes/analiseRoutes';
 import { ValidationError } from './errors/ValidationError';
 
 const app = express();
@@ -13,7 +12,6 @@ app.get('/saude', (_req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 app.use('/usuarios', userRoutes);
-app.use('/analise', analiseRoutes);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ValidationError) {
