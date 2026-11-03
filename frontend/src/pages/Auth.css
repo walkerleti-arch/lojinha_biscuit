@@ -1,0 +1,120 @@
+.auth-pagina {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: linear-gradient(160deg, var(--rosa-claro), var(--fundo) 60%);
+}
+
+.auth-cartao {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 10px 30px rgba(201, 75, 115, 0.12);
+}
+
+.auth-cartao h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.subtitulo {
+  margin: 4px 0 20px;
+  color: var(--texto-suave);
+}
+
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.campo input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1rem;
+  color: var(--texto);
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
+.campo input:focus {
+  outline: 2px solid var(--rosa);
+  outline-offset: 1px;
+  border-color: var(--rosa);
+}
+
+.campo input.invalido {
+  border-color: var(--erro);
+}
+
+.erros-campo {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--erro);
+  font-size: 0.85rem;
+}
+
+.dica {
+  margin: -6px 0 14px;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+
+.alerta {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.alerta-erro {
+  background: #fdecef;
+  color: var(--erro);
+  border: 1px solid #f3b8c3;
+}
+
+.alerta-sucesso {
+  background: #e8f6ee;
+  color: var(--sucesso);
+  border: 1px solid #b5e0c6;
+}
+
+.auth-cartao button[type='submit'] {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--rosa);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.auth-cartao button[type='submit']:hover:not(:disabled) {
+  background: var(--rosa-escuro);
+}
+
+.auth-cartao button[type='submit']:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rodape {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}

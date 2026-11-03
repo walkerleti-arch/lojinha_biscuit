@@ -1,0 +1,20 @@
+# Dependências
+node_modules
+
+# Código compilado (gerado pelo npm run build)
+dist
+
+# Variáveis de ambiente (têm a senha do banco)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
